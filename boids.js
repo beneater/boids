@@ -26,14 +26,14 @@ function distance(boid1, boid2) {
   );
 }
 
-// TODO: This is naive and inefficient.
 function nClosestBoids(boid, n) {
   // Make a copy
-  const sorted = boids.slice();
+  const sorted = boids.map(b => [distance(boid, b), b]);
   // Sort the copy by distance from `boid`
-  sorted.sort((a, b) => distance(boid, a) - distance(boid, b));
+  sorted.sort((a, b) => a[0] - b[0]);
+
   // Return the `n` closest
-  return sorted.slice(1, n + 1);
+  return sorted.slice(1, n + 1).map(obj => obj[1]);
 }
 
 // Called initially and whenever the window resizes to update the canvas
