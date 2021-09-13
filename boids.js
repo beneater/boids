@@ -278,7 +278,7 @@ function animationLoop() {
   // Update each boid
   for (let boid of boids) {
     if (boid.perching){
-      if (boid.perch_time > 0  && distance(boid, predBoid) > visualRange) {
+      if (boid.perch_time > 0  && distance(boid, predBoid) > visualRange) { // Don't perch if predator is close
         boid.perch_time -= 1;
         continue;
       }
