@@ -1,15 +1,9 @@
 # Boids algorithm demonstration
 
-Copyright 2020 Ben Eater
-
-This code is [MIT licensed](http://en.wikipedia.org/wiki/MIT_License).
-
 ## What is this?
-This is a simple demonstration of the boids algorithm that's featured in this Smarter Every Day video:
+This is a simple demonstration of the boids algorithm.
 
-[<img src=https://img.youtube.com/vi/4LWmRuB-uNU/maxresdefault.jpg width=360/>](https://www.youtube.com/watch?v=4LWmRuB-uNU)
-
-This simulation is running on [my website](https://eater.net/boids) if you’d like to check it out.
+This simulation is running on [my website](https://nivyanth.cloudns.cl/animations/boids) if you’d like to check it out.
 
 ## How does it work?
 
@@ -35,13 +29,15 @@ There are a ton of ways to extend this simple model to better simulate the behav
 
 It ought to run in any web browser. Download (or clone) the files. Then, just double-clicking on `index.html` on most computers will open the simulation in your web browser. You can then edit `boids.js` to tweak and experiment with the algorithm. Simply save your changes and reload the web browser page to see the effect.
 
-## What else can I do?
+## What else is done?
 
-There are lots of features you could try adding to the code yourself:
+There are lots of features apart from the above:
 
-- Add a predator that the boids try to avoid that scatters the flock if it gets too close.
-- Add a strong wind or current to see what effect it has on the flock.
-- Add "perching" behavior. If a boid gets close to the bottom of the screen, have it land and hang out on the ground for a bit before taking off again and rejoining the flock.
+- A predator that the boids try to avoid that scatters the flock if it gets too close.
+- A strong wind or current to see what effect it has on the flock.
+- "Perching" behavior. If a boid gets close to the bottom of the screen, have it land and hang out on the ground for a bit before taking off again and rejoining the flock.
+
+## To Do: 
 - Make it 3D! The boids' velocity is currently represented as a 2D vector. You could change them to 3D vectors and update the vector math to work. To draw in 3D, you could just change the size of the boids to represent how far away they are.
 
-See [this link](http://www.kfish.org/boids/pseudocode.html) for more ideas and hints on how to do some of the ideas above.
+See [this link](http://www.kfish.org/boids/pseudocode.html) for more details of logic.
