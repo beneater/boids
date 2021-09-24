@@ -312,7 +312,7 @@ function animationLoop() {
   }
 
   // Calculating behaviour of Predator boid (predBoid)
-  flyTowardsCenter(predBoid,0.02);
+  flyTowardsCenter(predBoid,0.05);
   matchWind(predBoid);
   limitSpeed(predBoid);
   keepWithinBounds(predBoid);
