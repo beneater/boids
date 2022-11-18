@@ -149,7 +149,7 @@ function limitSpeed(boid) {
   }
 }
 
-const DRAW_TRAIL = false;
+const DRAW_TRAIL = true;
 
 function drawBoid(ctx, boid) {
   const angle = Math.atan2(boid.dy, boid.dx);
@@ -207,7 +207,7 @@ function animationLoop() {
 
 window.onload = () => {
   // Make sure the canvas always fills the whole window
-  window.addEventListener("resize", sizeCanvas, false);
+//   window.addEventListener("resize", sizeCanvas, false);
   sizeCanvas();
 
   // Randomly distribute the boids to start

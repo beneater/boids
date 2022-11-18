@@ -1,7 +1,16 @@
 <!DOCTYPE html>
+
 <html>
+  <!-- Compiled and minified CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+  />
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <link rel="icon" href="/favicon.svg" />
   <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
     <title>Boids</title>
     <script src="./boids.js"></script>
     <style type="text/css">
@@ -10,9 +19,26 @@
         background: #282c34;
         overflow: hidden;
       }
+      input {
+        max-width: 20%;
+      }
     </style>
   </head>
   <body>
+    <a class="waves-effect waves-light btn">button</a>
+    <form action="#">
+      <p class="range-field">
+        <p class="blue-text">Coherence</p>
+        <input type="range" id="slider-coherence" min="0" max="100" />
+        <p class="blue-text">Separation</p>
+        <input type="range" id="slider-separation" min="0" max="100" />
+        <p class="blue-text">Alignment</p>
+        <input type="range" id="slider-alignment" min="0" max="100" />
+        <p class="blue-text">Visual Range</p>
+        <input type="range" id="slider-visual-range" min="0" max="100"/>
+      </p>
+      <p class="range-field"></p>
+    </form>
     <canvas id="boids" width="150" height="150"></canvas>
   </body>
 </html>
