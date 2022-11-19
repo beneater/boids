@@ -220,25 +220,21 @@ window.onload = () => {
   document.getElementById("slider-coherence").onmouseup = (ev) => {
     //TODO: Find maximum value to centeringFactor, after 0.05 the boid already display a high centering behavior
     centeringFactor = ev.target.value / 1000
-    initBoids()
   }
 
   document.getElementById("slider-separation").value = avoidFactor * 100
   document.getElementById("slider-separation").onmouseup = (ev) => {
     avoidFactor = ev.target.value / 100
-    initBoids()
   }
 
   document.getElementById("slider-alignment").value = matchingFactor * 100
   document.getElementById("slider-alignment").onmouseup = (ev) => {
     matchingFactor = ev.target.value / 100
-    initBoids()
   }
 
   document.getElementById("slider-visual-range").value = visualRange
   document.getElementById("slider-visual-range").onmouseup = (ev) => {
     visualRange = ev.target.value
-    initBoids()
   }
 
   document.getElementById("reset-button").onclick = (ev) => {
