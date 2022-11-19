@@ -19,26 +19,43 @@
         background: #282c34;
         overflow: hidden;
       }
-      input {
+      /* input {
         max-width: 20%;
-      }
+      } */
     </style>
   </head>
-  <body>
-    <a class="waves-effect waves-light btn">button</a>
-    <form action="#">
-      <p class="range-field">
-        <p class="blue-text">Coherence</p>
-        <input type="range" id="slider-coherence" min="0" max="100" />
-        <p class="blue-text">Separation</p>
-        <input type="range" id="slider-separation" min="0" max="100" />
-        <p class="blue-text">Alignment</p>
-        <input type="range" id="slider-alignment" min="0" max="100" />
-        <p class="blue-text">Visual Range</p>
-        <input type="range" id="slider-visual-range" min="0" max="100"/>
-      </p>
-      <p class="range-field"></p>
-    </form>
+    <body>
+      <form action="#">
+        <div class="row" style="position: relative">
+          <a class="waves-effect waves-light btn col s1" id="reset-button">Reset</a>
+          <div class="col s2">
+            <p class="blue-text">Coherence</p>
+            <p class="range-field">
+              <input type="range" id="slider-coherence" min="0" max="1000"/>
+            </p>
+          </div>
+          <div class="col s2">
+            <p class="blue-text">Separation</p>
+            <p class="range-field">
+              <input type="range" id="slider-separation" min="0" max="100" />
+            </p>
+          </div>
+          <div class="col s2">
+            <p class="blue-text">Alignment</p>
+            <p class="range-field">
+              <input type="range" id="slider-alignment" min="0" max="100">
+            </p>
+          </div>
+          <div class="col s2">
+            <p class="blue-text">Visual Range</p>
+            <p class="range-field">
+              <input type="range" id="slider-visual-range" min="0" max="100"/>
+            </p>
+          </div>
+
+        </div>
+        
+      </form>
     <canvas id="boids" width="150" height="150"></canvas>
   </body>
 </html>

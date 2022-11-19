@@ -3,11 +3,15 @@ let width = 150;
 let height = 150;
 
 const numBoids = 100;
-const visualRange = 75;
+var visualRange = 75;
+var centeringFactor = 0.005; //Coherence
+var avoidFactor = 0.05; // Separation
+var matchingFactor = 0.05; // alignment
 
 var boids = [];
 
 function initBoids() {
+  boids = []
   for (var i = 0; i < numBoids; i += 1) {
     boids[boids.length] = {
       x: Math.random() * width,
@@ -69,8 +73,6 @@ function keepWithinBounds(boid) {
 // Find the center of mass of the other boids and adjust velocity slightly to
 // point towards the center of mass.
 function flyTowardsCenter(boid) {
-  const centeringFactor = 0.005; // adjust velocity by this %
-
   let centerX = 0;
   let centerY = 0;
   let numNeighbors = 0;
@@ -95,7 +97,6 @@ function flyTowardsCenter(boid) {
 // Move away from other boids that are too close to avoid colliding
 function avoidOthers(boid) {
   const minDistance = 20; // The distance to stay away from other boids
-  const avoidFactor = 0.05; // Adjust velocity by this %
   let moveX = 0;
   let moveY = 0;
   for (let otherBoid of boids) {
@@ -114,8 +115,6 @@ function avoidOthers(boid) {
 // Find the average velocity (speed and direction) of the other boids and
 // adjust velocity slightly to match.
 function matchVelocity(boid) {
-  const matchingFactor = 0.05; // Adjust by this % of average velocity
-
   let avgDX = 0;
   let avgDY = 0;
   let numNeighbors = 0;
@@ -215,4 +214,36 @@ window.onload = () => {
 
   // Schedule the main animation loop
   window.requestAnimationFrame(animationLoop);
+
+  // Define sliders behaviors
+  document.getElementById("slider-coherence").value = centeringFactor * 1000
+  document.getElementById("slider-coherence").onmouseup = (ev) => {
+    //TODO: Find maximum value to centeringFactor, after 0.05 the boid already display a high centering behavior
+    centeringFactor = ev.target.value / 1000
+    initBoids()
+  }
+
+  document.getElementById("slider-separation").value = avoidFactor * 100
+  document.getElementById("slider-separation").onmouseup = (ev) => {
+    avoidFactor = ev.target.value / 100
+    initBoids()
+  }
+
+  document.getElementById("slider-alignment").value = matchingFactor * 100
+  document.getElementById("slider-alignment").onmouseup = (ev) => {
+    matchingFactor = ev.target.value / 100
+    initBoids()
+  }
+
+  document.getElementById("slider-visual-range").value = visualRange
+  document.getElementById("slider-visual-range").onmouseup = (ev) => {
+    visualRange = ev.target.value
+    initBoids()
+  }
+
+  document.getElementById("reset-button").onclick = (ev) => {
+    initBoids()
+  }
 };
+
+
