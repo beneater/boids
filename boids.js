@@ -217,23 +217,23 @@ window.onload = () => {
 
   // Define sliders behaviors
   document.getElementById("slider-coherence").value = centeringFactor * 1000
-  document.getElementById("slider-coherence").onmouseup = (ev) => {
+  document.getElementById("slider-coherence").oninput = (ev) => {
     //TODO: Find maximum value to centeringFactor, after 0.05 the boid already display a high centering behavior
     centeringFactor = ev.target.value / 1000
   }
 
   document.getElementById("slider-separation").value = avoidFactor * 100
-  document.getElementById("slider-separation").onmouseup = (ev) => {
+  document.getElementById("slider-separation").oninput = (ev) => {
     avoidFactor = ev.target.value / 100
   }
 
   document.getElementById("slider-alignment").value = matchingFactor * 100
-  document.getElementById("slider-alignment").onmouseup = (ev) => {
+  document.getElementById("slider-alignment").oninput = (ev) => {
     matchingFactor = ev.target.value / 100
   }
 
   document.getElementById("slider-visual-range").value = visualRange
-  document.getElementById("slider-visual-range").onmouseup = (ev) => {
+  document.getElementById("slider-visual-range").oninput = (ev) => {
     visualRange = ev.target.value
   }
 
