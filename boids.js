@@ -7,6 +7,7 @@ var visualRange = 75;
 var centeringFactor = 0.005; // Coherence
 var avoidFactor = 0.05; // Separation
 var matchingFactor = 0.05; // Alignment
+var leaderWeight = 0.3; // How much the boids will go towards the leader
 
 // Colors
 const YELLOW = "#f4df55";
@@ -101,7 +102,7 @@ function keepWithinBounds(boid) {
 
 // Find the center of mass of the other boids and adjust velocity slightly to
 // point towards the center of mass.
-function flyTowardsCenter(boid) {
+function flyTowardsCenter(boid, leader) {
   let centerX = 0;
   let centerY = 0;
   let numNeighbors = 0;
@@ -117,10 +118,15 @@ function flyTowardsCenter(boid) {
   if (numNeighbors) {
     centerX = centerX / numNeighbors;
     centerY = centerY / numNeighbors;
-
-    boid.dx += (centerX - boid.x) * centeringFactor;
-    boid.dy += (centerY - boid.y) * centeringFactor;
   }
+
+  if (mouseLeaderMode) {
+    centerX = mouse.x * leaderWeight + centerX * (1 - leaderWeight);
+    centerY = mouse.y * leaderWeight + centerY * (1 - leaderWeight);
+  }
+
+  boid.dx += (centerX - boid.x) * centeringFactor;
+  boid.dy += (centerY - boid.y) * centeringFactor;
 }
 
 // Move away from other boids that are too close to avoid colliding
