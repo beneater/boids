@@ -4,9 +4,9 @@ let height = 150;
 
 const numBoids = 100;
 var visualRange = 75;
-var centeringFactor = 0.005; //Coherence
+var centeringFactor = 0.005; // Coherence
 var avoidFactor = 0.05; // Separation
-var matchingFactor = 0.05; // alignment
+var matchingFactor = 0.05; // Alignment
 
 // Colors
 const YELLOW = "#f4df55";
@@ -14,7 +14,11 @@ const BLUE = "#558cf4";
 const ALPHA_BLUE = "#558cf466";
 
 // Simulation config
-const DRAW_TRAIL = true;
+var mouseLeaderMode = false;
+var drawTrail = true;
+
+// Simulation constants
+const BOID_SPEED_LIMIT = 15;
 
 // Color config
 const LEADER_COLOR = YELLOW;
@@ -164,7 +168,7 @@ function matchVelocity(boid) {
 // Speed will naturally vary in flocking behavior, but real animals can't go
 // arbitrarily fast.
 function limitSpeed(boid) {
-  const speedLimit = 15;
+  const speedLimit = BOID_SPEED_LIMIT;
 
   const speed = Math.sqrt(boid.dx * boid.dx + boid.dy * boid.dy);
   if (speed > speedLimit) {
@@ -179,6 +183,7 @@ function drawBoid(ctx, boid) {
   ctx.rotate(angle);
   ctx.translate(-boid.x, -boid.y);
   ctx.fillStyle = BOID_COLOR;
+  // Draw triangle
   ctx.beginPath();
   ctx.moveTo(boid.x, boid.y);
   ctx.lineTo(boid.x - 15, boid.y + 5);
@@ -187,7 +192,7 @@ function drawBoid(ctx, boid) {
   ctx.fill();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-  if (DRAW_TRAIL) {
+  if (drawTrail) {
     ctx.strokeStyle = BOID_PATH_COLOR;
     ctx.beginPath();
     ctx.moveTo(boid.history[0][0], boid.history[0][1]);
@@ -199,12 +204,9 @@ function drawBoid(ctx, boid) {
 }
 
 function drawMouseLeader(ctx, mouse) {
-  // const angle = Math.atan2(mouse.dy, mouse.dx);
-  // ctx.rotate(angle);
-  ctx.translate(mouse.x, mouse.y);
-  ctx.translate(-mouse.x, -mouse.y);
   ctx.fillStyle = LEADER_COLOR;
-  // ctx.arc(100,75,50,0*Math.PI,1.5*Math.PI)
+
+  // Draw square
   ctx.beginPath();
   ctx.moveTo(mouse.x - 5, mouse.y - 5);
   ctx.lineTo(mouse.x - 5, mouse.y + 5);
@@ -212,15 +214,6 @@ function drawMouseLeader(ctx, mouse) {
   ctx.lineTo(mouse.x + 5, mouse.y - 5);
   ctx.fill();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  //   if (DRAW_TRAIL) {
-  //     ctx.strokeStyle = "#558cf466";
-  //     ctx.beginPath();
-  //     ctx.moveTo(boid.history[0][0], boid.history[0][1]);
-  //     for (const point of boid.history) {
-  //       ctx.lineTo(point[0], point[1]);
-  //     }
-  //     ctx.stroke();
-  //   }
 }
 
 // Main animation loop
@@ -247,7 +240,7 @@ function animationLoop() {
   for (let boid of boids) {
     drawBoid(ctx, boid);
   }
-  drawMouseLeader(ctx, mouse);
+  if (mouseLeaderMode) drawMouseLeader(ctx, mouse);
 
   // Schedule the next frame
   window.requestAnimationFrame(animationLoop);
@@ -284,6 +277,11 @@ window.onload = () => {
   document.getElementById("slider-visual-range").value = visualRange;
   document.getElementById("slider-visual-range").oninput = (ev) => {
     visualRange = ev.target.value;
+  };
+
+  document.getElementById("toggle-mouse").value = mouseLeaderMode;
+  document.getElementById("toggle-mouse").oninput = (ev) => {
+    mouseLeaderMode = ev.target.checked;
   };
 
   document.getElementById("reset-button").onclick = (ev) => {
