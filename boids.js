@@ -86,7 +86,7 @@ function sizeCanvas() {
 // Constrain a boid to within the window. If it gets too close to an edge,
 // nudge it back in and reverse its direction.
 function keepWithinBounds(boid) {
-  const margin = 200;
+  const margin = 100;
   const turnFactor = 1;
 
   if (boid.x < margin) {
@@ -119,11 +119,21 @@ function flyTowardsCenter(boid) {
   }
 
   if (numNeighbors) {
-    centerX = centerX / numNeighbors;
-    centerY = centerY / numNeighbors;
+    if (boid.type == 'normalBoid') {
+      centerX = centerX / numNeighbors;
+      centerY = centerY / numNeighbors;
 
-    boid.dx += (centerX - boid.x) * centeringFactor;
-    boid.dy += (centerY - boid.y) * centeringFactor;
+      boid.dx += (centerX - boid.x) * centeringFactor;
+      boid.dy += (centerY - boid.y) * centeringFactor;
+    }
+    else if (boid.type == 'predatorBoid') {
+      centerX = centerX / numNeighbors;
+      centerY = centerY / numNeighbors;
+
+      boid.dx += (centerX - boid.x) * predationFactor;
+      boid.dy += (centerY - boid.y) * predationFactor;
+    }
+    
   }
 }
 
@@ -272,7 +282,7 @@ function animationLoop() {
 
 window.onload = () => {
   // Make sure the canvas always fills the whole window
-//   window.addEventListener("resize", sizeCanvas, false);
+  window.addEventListener("resize", sizeCanvas, false);
   sizeCanvas();
 
   // Randomly distribute the boids to start
@@ -302,6 +312,16 @@ window.onload = () => {
   document.getElementById("slider-visual-range").value = visualRange
   document.getElementById("slider-visual-range").oninput = (ev) => {
     visualRange = ev.target.value
+  }
+
+  document.getElementById("slider-predator-coherence").value = predationFactor * 1000
+  document.getElementById("slider-predator-coherence").oninput = (ev) => {
+    predationFactor = ev.target.value / 1000
+  }
+
+  document.getElementById("slider-avoid-predator").value = avoidPredatorFactor * 100
+  document.getElementById("slider-avoid-predator").oninput = (ev) => {
+    avoidPredatorFactor = ev.target.value / 100
   }
 
   document.getElementById("reset-button").onclick = (ev) => {
