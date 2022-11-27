@@ -3,12 +3,28 @@ let width = 150;
 let height = 150;
 
 const numBoids = 100;
+const numPredators = 1;
 var visualRange = 75;
 var centeringFactor = 0.005; //Coherence
 var avoidFactor = 0.05; // Separation
 var matchingFactor = 0.05; // alignment
 
+// Predation variables
+var predationFactor = 0.005; // How much the predator will pursue the flock
+var avoidPredatorFactor = 0.05; // How much the flock try to avoid the predator
+
 var boids = [];
+var predatorBoids = []
+
+const boidsColors = {
+  "normalBoid": "#558cf4",
+  "predatorBoid": "#800000"
+}
+
+const boidsTrails = {
+  "normalBoid": "#558cf466",
+  "predatorBoid": "#80000066"
+}
 
 function initBoids() {
   boids = []
@@ -19,7 +35,22 @@ function initBoids() {
       dx: Math.random() * 10 - 5,
       dy: Math.random() * 10 - 5,
       history: [],
+      type: "normalBoid",
     };
+  }
+}
+
+function initPredators() {
+  predatorBoids = []
+  for (var i = 0; i < numPredators; i+= 1) {
+    predatorBoids[predatorBoids.length] = {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      dx: Math.random() * 10 - 5,
+      dy: Math.random() * 10 - 5,
+      history: [],
+      type: "predatorBoid"
+    }
   }
 }
 
@@ -44,8 +75,10 @@ function nClosestBoids(boid, n) {
 // size and width/height variables.
 function sizeCanvas() {
   const canvas = document.getElementById("boids");
-  width = window.innerWidth;
-  height = window.innerHeight;
+
+  width = canvas.parentElement.clientWidth;
+  height = canvas.parentElement.clientHeight;
+
   canvas.width = width;
   canvas.height = height;
 }
@@ -112,6 +145,21 @@ function avoidOthers(boid) {
   boid.dy += moveY * avoidFactor;
 }
 
+// Run away from predators
+function avoidPredators(boid) {
+  let moveX = 0;
+  let moveY = 0;
+  for (let predator of predatorBoids) {
+    if (distance(boid, predator) < visualRange) {
+      moveX += boid.x - predator.x;
+      moveY += boid.y - predator.y;
+    }
+  }
+
+  boid.dx += moveX * avoidPredatorFactor;
+  boid.dy += moveY * avoidPredatorFactor;
+}
+
 // Find the average velocity (speed and direction) of the other boids and
 // adjust velocity slightly to match.
 function matchVelocity(boid) {
@@ -155,7 +203,7 @@ function drawBoid(ctx, boid) {
   ctx.translate(boid.x, boid.y);
   ctx.rotate(angle);
   ctx.translate(-boid.x, -boid.y);
-  ctx.fillStyle = "#558cf4";
+  ctx.fillStyle = boidsColors[boid.type];
   ctx.beginPath();
   ctx.moveTo(boid.x, boid.y);
   ctx.lineTo(boid.x - 15, boid.y + 5);
@@ -165,7 +213,7 @@ function drawBoid(ctx, boid) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
   if (DRAW_TRAIL) {
-    ctx.strokeStyle = "#558cf466";
+    ctx.strokeStyle = boidsTrails[boid.type];
     ctx.beginPath();
     ctx.moveTo(boid.history[0][0], boid.history[0][1]);
     for (const point of boid.history) {
@@ -175,6 +223,7 @@ function drawBoid(ctx, boid) {
   }
 }
 
+
 // Main animation loop
 function animationLoop() {
   // Update each boid
@@ -182,6 +231,7 @@ function animationLoop() {
     // Update the velocities according to each rule
     flyTowardsCenter(boid);
     avoidOthers(boid);
+    avoidPredators(boid);
     matchVelocity(boid);
     limitSpeed(boid);
     keepWithinBounds(boid);
@@ -193,11 +243,27 @@ function animationLoop() {
     boid.history = boid.history.slice(-50);
   }
 
+
+  for (let predatorBoid of predatorBoids) {
+    flyTowardsCenter(predatorBoid);
+    matchVelocity(predatorBoid);
+    limitSpeed(predatorBoid);
+    keepWithinBounds(predatorBoid);
+
+    predatorBoid.x += predatorBoid.dx;
+    predatorBoid.y += predatorBoid.dy;
+    predatorBoid.history.push([predatorBoid.x, predatorBoid.y])
+    predatorBoid.history = predatorBoid.history.slice(-50);
+  }
   // Clear the canvas and redraw all the boids in their current positions
   const ctx = document.getElementById("boids").getContext("2d");
   ctx.clearRect(0, 0, width, height);
   for (let boid of boids) {
     drawBoid(ctx, boid);
+  }
+
+  for (let predatorBoid of predatorBoids) {
+    drawBoid(ctx, predatorBoid);
   }
 
   // Schedule the next frame
@@ -211,6 +277,7 @@ window.onload = () => {
 
   // Randomly distribute the boids to start
   initBoids();
+  initPredators();
 
   // Schedule the main animation loop
   window.requestAnimationFrame(animationLoop);
