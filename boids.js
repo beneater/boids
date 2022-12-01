@@ -2,8 +2,10 @@
 let width = 150;
 let height = 150;
 
+// Simulation parameters
 const numBoids = 100;
 const numPredators = 1;
+const numLeaders = 1;
 const n_obstacles = 4;
 var visualRange = 75;
 var centeringFactor = 0.005; // Coherence
@@ -14,9 +16,10 @@ var leaderWeight = 0.3; // How much the boids will go towards the leader
 // Colors
 const YELLOW = "#f4df55";
 const BLUE = "#558cf4";
-const ALPHA_BLUE = "#558cf466";
 const RED = "#d8315b";
+const ALPHA_BLUE = "#558cf466";
 const ALPHA_RED = "#d8315b66";
+const ALPHA_YELLOW = "#f4df5566";
 
 // Simulation config
 var mouseLeaderMode = false;
@@ -42,18 +45,20 @@ var predationFactor = 0.005; // How much the predator will pursue the flock
 var avoidPredatorFactor = 0.05; // How much the flock try to avoid the predator
 
 var boids = [];
-var predatorBoids = []
-var obstacles = []
+var predatorBoids = [];
+var obstacles = [];
 
 const boidsColors = {
-  "normalBoid": BLUE,
-  "predatorBoid": RED
-}
+  normalBoid: BLUE,
+  predatorBoid: RED,
+  leaderBoid: YELLOW,
+};
 
 const boidsTrails = {
-  "normalBoid": ALPHA_BLUE,
-  "predatorBoid": ALPHA_RED
-}
+  normalBoid: ALPHA_BLUE,
+  predatorBoid: ALPHA_RED,
+  leaderBoid: ALPHA_YELLOW,
+};
 
 function mouse_position(e) {
   mouse.x = e.clientX;
@@ -75,24 +80,35 @@ function initBoids() {
 }
 
 function initPredators() {
-  predatorBoids = []
-  for (var i = 0; i < numPredators; i+= 1) {
+  predatorBoids = [];
+  for (var i = 0; i < numPredators; i += 1) {
     predatorBoids[predatorBoids.length] = {
       x: Math.random() * width,
       y: Math.random() * height,
       dx: Math.random() * 10 - 5,
       dy: Math.random() * 10 - 5,
       history: [],
-      type: "predatorBoid"
-    }
+      type: "predatorBoid",
+    };
   }
 }
 
-function distance(boid1, boid2) {
-  return Math.sqrt(
-    (boid1.x - boid2.x) * (boid1.x - boid2.x) +
-      (boid1.y - boid2.y) * (boid1.y - boid2.y)
-  );
+function initLeaders() {
+  leaderBoids = [];
+  for (var i = 0; i < numLeaders; i += 1) {
+    leaderBoids[leaderBoids.length] = {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      dx: Math.random() * 10 - 5,
+      dy: Math.random() * 10 - 5,
+      history: [],
+      type: "leaderBoid",
+    };
+  }
+}
+
+function distance(A, B) {
+  return Math.sqrt((A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y));
 }
 
 // TODO: This is naive and inefficient.
@@ -153,7 +169,7 @@ function flyTowardsCenter(boid, leader) {
   }
 
   if (numNeighbors) {
-    if (boid.type == 'normalBoid') {
+    if (boid.type == "normalBoid") {
       centerX = centerX / numNeighbors;
       centerY = centerY / numNeighbors;
 
@@ -164,19 +180,14 @@ function flyTowardsCenter(boid, leader) {
 
       boid.dx += (centerX - boid.x) * centeringFactor;
       boid.dy += (centerY - boid.y) * centeringFactor;
-    }
-    else if (boid.type == 'predatorBoid') {
+    } else if (boid.type == "predatorBoid") {
       centerX = centerX / numNeighbors;
       centerY = centerY / numNeighbors;
 
       boid.dx += (centerX - boid.x) * predationFactor;
       boid.dy += (centerY - boid.y) * predationFactor;
     }
-    
   }
-
-  // boid.dx += (centerX - boid.x) * centeringFactor;
-  // boid.dy += (centerY - boid.y) * centeringFactor;
 }
 
 // Move away from other boids that are too close to avoid colliding
@@ -305,7 +316,6 @@ function animationLoop() {
     boid.history = boid.history.slice(-50);
   }
 
-
   for (let predatorBoid of predatorBoids) {
     flyTowardsCenter(predatorBoid);
     matchVelocity(predatorBoid);
@@ -314,9 +324,24 @@ function animationLoop() {
 
     predatorBoid.x += predatorBoid.dx;
     predatorBoid.y += predatorBoid.dy;
-    predatorBoid.history.push([predatorBoid.x, predatorBoid.y])
+    predatorBoid.history.push([predatorBoid.x, predatorBoid.y]);
     predatorBoid.history = predatorBoid.history.slice(-50);
   }
+
+  for (let leader of leaderBoids) {
+    // flyTowardsCenter(leader);
+    // Leader avoids predator
+    avoidPredators(leader);
+    matchVelocity(leader);
+    limitSpeed(leader);
+    keepWithinBounds(leader);
+
+    leader.x += leader.dx;
+    leader.y += leader.dy;
+    leader.history.push([leader.x, leader.y]);
+    leader.history = leader.history.slice(-50);
+  }
+
   // Clear the canvas and redraw all the boids in their current positions
   const ctx = document.getElementById("boids").getContext("2d");
   ctx.clearRect(0, 0, width, height);
@@ -327,6 +352,10 @@ function animationLoop() {
 
   for (let predatorBoid of predatorBoids) {
     drawBoid(ctx, predatorBoid);
+  }
+
+  for (let leaderBoid of leaderBoids) {
+    drawBoid(ctx, leaderBoid);
   }
 
   // Schedule the next frame
@@ -341,6 +370,7 @@ window.onload = () => {
   // Randomly distribute the boids to start
   initBoids();
   initPredators();
+  initLeaders();
 
   // Schedule the main animation loop
   window.requestAnimationFrame(animationLoop);
@@ -372,15 +402,17 @@ window.onload = () => {
     mouseLeaderMode = ev.target.checked;
   };
 
-  document.getElementById("slider-predator-coherence").value = predationFactor * 1000
+  document.getElementById("slider-predator-coherence").value =
+    predationFactor * 1000;
   document.getElementById("slider-predator-coherence").oninput = (ev) => {
-    predationFactor = ev.target.value / 1000
-  }
+    predationFactor = ev.target.value / 1000;
+  };
 
-  document.getElementById("slider-avoid-predator").value = avoidPredatorFactor * 100
+  document.getElementById("slider-avoid-predator").value =
+    avoidPredatorFactor * 100;
   document.getElementById("slider-avoid-predator").oninput = (ev) => {
-    avoidPredatorFactor = ev.target.value / 100
-  }
+    avoidPredatorFactor = ev.target.value / 100;
+  };
 
   document.getElementById("reset-button").onclick = (ev) => {
     initBoids();
