@@ -27,6 +27,7 @@ const DRAW_TRAIL = true;
 
 // Simulation constants
 const BOID_SPEED_LIMIT = 15;
+const LEADER_VISUAL_RANGE_MULTIPLIER = 3;
 
 // Color config
 const LEADER_COLOR = YELLOW;
@@ -213,7 +214,12 @@ function avoidPredators(boid) {
   let moveX = 0;
   let moveY = 0;
   for (let predator of predatorBoids) {
-    if (distance(boid, predator) < visualRange) {
+    if (
+      distance(boid, predator) <
+      (boid.type == "leaderBoid"
+        ? visualRange * LEADER_VISUAL_RANGE_MULTIPLIER
+        : visualRange)
+    ) {
       moveX += boid.x - predator.x;
       moveY += boid.y - predator.y;
     }
