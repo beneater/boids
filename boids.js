@@ -4,6 +4,7 @@ let height = 150;
 
 const numBoids = 100;
 const numPredators = 1;
+const n_obstacles = 4;
 var visualRange = 75;
 var centeringFactor = 0.005; //Coherence
 var avoidFactor = 0.05; // Separation
@@ -15,6 +16,7 @@ var avoidPredatorFactor = 0.05; // How much the flock try to avoid the predator
 
 var boids = [];
 var predatorBoids = []
+var obstacles = []
 
 const boidsColors = {
   "normalBoid": "#558cf4",
