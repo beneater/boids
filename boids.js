@@ -2,73 +2,74 @@
 let width = 150;
 let height = 150;
 
-// Simulation parameters
-const numBoids = 100;
-const numPredators = 1;
-const numLeaders = 1;
-const n_obstacles = 4;
-var visualRange = 75;
-var centeringFactor = 0.005; // Coherence
-var avoidFactor = 0.05; // Separation
-var matchingFactor = 0.05; // Alignment
-var leaderWeight = 0.3; // How much the boids will go towards the leader
-
-// Colors
+// ---------------------
+// Simulation constants
+// ---------------------
+const NUM_BOIDS = 100;
+const NUM_PREDATORS = 1;
+const NUM_LEADERS = 1;
+const NUM_OBSTACLES = 4;
+const BOID_SPEED_LIMIT = 8;
+const LEADER_VISUAL_RANGE_MULT = 3;
+const COMM_INTERVAL = 500;
+// Colors constants
 const YELLOW = "#f4df55";
 const BLUE = "#558cf4";
 const RED = "#d8315b";
 const ALPHA_BLUE = "#558cf466";
 const ALPHA_RED = "#d8315b66";
 const ALPHA_YELLOW = "#f4df5566";
-
-// Simulation config
-var mouseLeaderMode = false;
-const DRAW_TRAIL = true;
-
-// Simulation constants
-const BOID_SPEED_LIMIT = 15;
-const LEADER_VISUAL_RANGE_MULTIPLIER = 3;
-
-// Color config
-const LEADER_COLOR = YELLOW;
-const BOID_COLOR = BLUE;
-const BOID_PATH_COLOR = ALPHA_BLUE;
-
-var mouse = {
-  x: 0,
-  y: 0,
-  dx: 0,
-  dy: 0,
-};
-
-// Predation variables
-var predationFactor = 0.005; // How much the predator will pursue the flock
-var avoidPredatorFactor = 0.05; // How much the flock try to avoid the predator
-
-var boids = [];
-var predatorBoids = [];
-var obstacles = [];
-
+// Colors config
 const boidsColors = {
   normalBoid: BLUE,
   predatorBoid: RED,
   leaderBoid: YELLOW,
 };
-
 const boidsTrails = {
   normalBoid: ALPHA_BLUE,
   predatorBoid: ALPHA_RED,
   leaderBoid: ALPHA_YELLOW,
 };
 
+// ---------------------
+// Simulation parameters
+// ---------------------
+let visualRange = 75;
+let centeringFactor = 0.005; // Coherence
+let avoidFactor = 0.05; // Separation
+let matchingFactor = 0.05; // Alignment
+// Mouse leader
+let mouseLeaderMode = false;
+let mouseLeaderWeight = 0.3; // How much the boids will go towards the leader
+// Predation
+let predationFactor = 0.005; // How much the predator will pursue the flock
+let avoidPredatorFactor = 0.05; // How much the flock try to avoid the predator
+// Visual
+let drawTrail = true;
+
+// Interaction
+let mouse = {
+  x: 0,
+  y: 0,
+  dx: 0,
+  dy: 0,
+};
+
+// Entities
+let boids = [];
+let predatorBoids = [];
+let leaderBoids = [];
+let obstacles = [];
+let arrows = [];
+
 function mouse_position(e) {
   mouse.x = e.clientX;
-  mouse.y = e.clientY - 120;
+  mouse.y = e.clientY - 220;
 }
 
 function initBoids() {
   boids = [];
-  for (var i = 0; i < numBoids; i += 1) {
+  for (var i = 0; i < NUM_BOIDS; i += 1) {
     boids[boids.length] = {
       x: Math.random() * width,
       y: Math.random() * height,
@@ -82,7 +83,7 @@ function initBoids() {
 
 function initPredators() {
   predatorBoids = [];
-  for (var i = 0; i < numPredators; i += 1) {
+  for (var i = 0; i < NUM_PREDATORS; i += 1) {
     predatorBoids[predatorBoids.length] = {
       x: Math.random() * width,
       y: Math.random() * height,
@@ -96,20 +97,56 @@ function initPredators() {
 
 function initLeaders() {
   leaderBoids = [];
-  for (var i = 0; i < numLeaders; i += 1) {
+  for (var i = 0; i < NUM_LEADERS; i += 1) {
+    dx0 = Math.random() * 10 - 5;
+    dy0 = Math.random() * 10 - 5;
+    x0 = Math.random() * width;
+    y0 = Math.random() * height;
     leaderBoids[leaderBoids.length] = {
-      x: Math.random() * width,
-      y: Math.random() * height,
-      dx: Math.random() * 10 - 5,
-      dy: Math.random() * 10 - 5,
+      x: x0,
+      y: y0,
+      dx: dx0,
+      dy: dy0,
+      arrow_dx: dx0,
+      arrow_dy: dy0,
+      arrow_x: x0,
+      arrow_y: y0,
       history: [],
       type: "leaderBoid",
     };
   }
 }
 
-function distance(A, B) {
+// Used by the leaders to leave an indication on the map, hinting boids where to go
+function updateArrows() {
+  for (leader of leaderBoids) {
+    console.log(leader.x);
+    leader.arrow_dx = leader.dx;
+    leader.arrow_dy = leader.dy;
+    leader.arrow_x = leader.x;
+    leader.arrow_y = leader.y;
+  }
+}
+
+function reactToArrow(boid) {
+  for (leader of leaderBoids) {
+    // If boid can see an arrow
+    if (
+      positionDistance(boid.x, boid.y, leader.arrow_x, leader.arrow_y) <
+      visualRange
+    ) {
+      boid.dx += leader.arrow_dx;
+      boid.dy += leader.arrow_dy;
+    }
+  }
+}
+
+function boidDistance(A, B) {
   return Math.sqrt((A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y));
+}
+
+function positionDistance(x1, y1, x2, y2) {
+  return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 }
 
 // TODO: This is naive and inefficient.
@@ -117,7 +154,7 @@ function nClosestBoids(boid, n) {
   // Make a copy
   const sorted = boids.slice();
   // Sort the copy by distance from `boid`
-  sorted.sort((a, b) => distance(boid, a) - distance(boid, b));
+  sorted.sort((a, b) => boidDistance(boid, a) - boidDistance(boid, b));
   // Return the `n` closest
   return sorted.slice(1, n + 1);
 }
@@ -156,13 +193,13 @@ function keepWithinBounds(boid) {
 
 // Find the center of mass of the other boids and adjust velocity slightly to
 // point towards the center of mass.
-function flyTowardsCenter(boid, leader) {
+function flyTowardsCenter(boid) {
   let centerX = 0;
   let centerY = 0;
   let numNeighbors = 0;
 
-  for (let otherBoid of boids) {
-    if (distance(boid, otherBoid) < visualRange) {
+  for (otherBoid of boids) {
+    if (boidDistance(boid, otherBoid) < visualRange) {
       centerX += otherBoid.x;
       centerY += otherBoid.y;
       numNeighbors += 1;
@@ -171,12 +208,15 @@ function flyTowardsCenter(boid, leader) {
 
   if (numNeighbors) {
     if (boid.type == "normalBoid") {
+      // if (boid.type == "normalBoid" || boid.type == "leaderBoid" ) {
       centerX = centerX / numNeighbors;
       centerY = centerY / numNeighbors;
 
       if (mouseLeaderMode) {
-        centerX = mouse.x * leaderWeight + centerX * (1 - leaderWeight);
-        centerY = mouse.y * leaderWeight + centerY * (1 - leaderWeight);
+        centerX =
+          mouse.x * mouseLeaderWeight + centerX * (1 - mouseLeaderWeight);
+        centerY =
+          mouse.y * mouseLeaderWeight + centerY * (1 - mouseLeaderWeight);
       }
 
       boid.dx += (centerX - boid.x) * centeringFactor;
@@ -198,7 +238,7 @@ function avoidOthers(boid) {
   let moveY = 0;
   for (let otherBoid of boids) {
     if (otherBoid !== boid) {
-      if (distance(boid, otherBoid) < minDistance) {
+      if (boidDistance(boid, otherBoid) < minDistance) {
         moveX += boid.x - otherBoid.x;
         moveY += boid.y - otherBoid.y;
       }
@@ -215,9 +255,9 @@ function avoidPredators(boid) {
   let moveY = 0;
   for (let predator of predatorBoids) {
     if (
-      distance(boid, predator) <
+      boidDistance(boid, predator) <
       (boid.type == "leaderBoid"
-        ? visualRange * LEADER_VISUAL_RANGE_MULTIPLIER
+        ? visualRange * LEADER_VISUAL_RANGE_MULT
         : visualRange)
     ) {
       moveX += boid.x - predator.x;
@@ -237,7 +277,7 @@ function matchVelocity(boid) {
   let numNeighbors = 0;
 
   for (let otherBoid of boids) {
-    if (distance(boid, otherBoid) < visualRange) {
+    if (boidDistance(boid, otherBoid) < visualRange) {
       avgDX += otherBoid.dx;
       avgDY += otherBoid.dy;
       numNeighbors += 1;
@@ -256,30 +296,32 @@ function matchVelocity(boid) {
 // Speed will naturally vary in flocking behavior, but real animals can't go
 // arbitrarily fast.
 function limitSpeed(boid) {
-  const speedLimit = BOID_SPEED_LIMIT;
-
   const speed = Math.sqrt(boid.dx * boid.dx + boid.dy * boid.dy);
-  if (speed > speedLimit) {
-    boid.dx = (boid.dx / speed) * speedLimit;
-    boid.dy = (boid.dy / speed) * speedLimit;
+  if (speed > BOID_SPEED_LIMIT) {
+    boid.dx = (boid.dx / speed) * BOID_SPEED_LIMIT;
+    boid.dy = (boid.dy / speed) * BOID_SPEED_LIMIT;
   }
 }
 
-function drawBoid(ctx, boid) {
-  const angle = Math.atan2(boid.dy, boid.dx);
-  ctx.translate(boid.x, boid.y);
+function drawTriangle(ctx, x, y, dx, dy, fillStyle) {
+  const angle = Math.atan2(dy, dx);
+  ctx.translate(x, y);
   ctx.rotate(angle);
-  ctx.translate(-boid.x, -boid.y);
-  ctx.fillStyle = boidsColors[boid.type];
+  ctx.translate(-x, -y);
+  ctx.fillStyle = fillStyle;
   ctx.beginPath();
-  ctx.moveTo(boid.x, boid.y);
-  ctx.lineTo(boid.x - 15, boid.y + 5);
-  ctx.lineTo(boid.x - 15, boid.y - 5);
-  ctx.lineTo(boid.x, boid.y);
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - 15, y + 5);
+  ctx.lineTo(x - 15, y - 5);
+  ctx.lineTo(x, y);
   ctx.fill();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
 
-  if (DRAW_TRAIL) {
+function drawBoid(ctx, boid) {
+  drawTriangle(ctx, boid.x, boid.y, boid.dx, boid.dy, boidsColors[boid.type]);
+
+  if (drawTrail) {
     ctx.strokeStyle = boidsTrails[boid.type];
     ctx.beginPath();
     ctx.moveTo(boid.history[0][0], boid.history[0][1]);
@@ -288,10 +330,22 @@ function drawBoid(ctx, boid) {
     }
     ctx.stroke();
   }
+
+  // If leader, draw arrow indicating last taken direction
+  if (boid.type == "leaderBoid") {
+    drawTriangle(
+      ctx,
+      boid.arrow_x,
+      boid.arrow_y,
+      boid.arrow_dx,
+      boid.arrow_dy,
+      boidsTrails[boid.type]
+    );
+  }
 }
 
 function drawMouseLeader(ctx, mouse) {
-  ctx.fillStyle = LEADER_COLOR;
+  ctx.fillStyle = YELLOW;
 
   // Draw square
   ctx.beginPath();
@@ -303,7 +357,9 @@ function drawMouseLeader(ctx, mouse) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
+// -------------------
 // Main animation loop
+// -------------------
 function animationLoop() {
   // Update each boid
   for (let boid of boids) {
@@ -311,6 +367,7 @@ function animationLoop() {
     flyTowardsCenter(boid);
     avoidOthers(boid);
     avoidPredators(boid);
+    reactToArrow(boid);
     matchVelocity(boid);
     limitSpeed(boid);
     keepWithinBounds(boid);
@@ -335,8 +392,8 @@ function animationLoop() {
   }
 
   for (let leader of leaderBoids) {
-    // flyTowardsCenter(leader);
-    // Leader avoids predator
+    flyTowardsCenter(leader);
+    // Leader avoids predator with higher visual range
     avoidPredators(leader);
     matchVelocity(leader);
     limitSpeed(leader);
@@ -351,16 +408,16 @@ function animationLoop() {
   // Clear the canvas and redraw all the boids in their current positions
   const ctx = document.getElementById("boids").getContext("2d");
   ctx.clearRect(0, 0, width, height);
-  for (let boid of boids) {
+  for (boid of boids) {
     drawBoid(ctx, boid);
   }
   if (mouseLeaderMode) drawMouseLeader(ctx, mouse);
 
-  for (let predatorBoid of predatorBoids) {
+  for (predatorBoid of predatorBoids) {
     drawBoid(ctx, predatorBoid);
   }
 
-  for (let leaderBoid of leaderBoids) {
+  for (leaderBoid of leaderBoids) {
     drawBoid(ctx, leaderBoid);
   }
 
@@ -380,6 +437,9 @@ window.onload = () => {
 
   // Schedule the main animation loop
   window.requestAnimationFrame(animationLoop);
+
+  // Update the indicating arrows left by the leaders
+  window.setInterval(updateArrows, COMM_INTERVAL);
 
   // Define sliders behaviors
   document.getElementById("slider-coherence").value = centeringFactor * 1000;
