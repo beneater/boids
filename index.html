@@ -6,6 +6,7 @@
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
   />
+  <link rel="stylesheet" href="global.css" />
   <!-- Compiled and minified JavaScript -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <link rel="icon" href="/favicon.svg" />
@@ -24,38 +25,47 @@
       } */
     </style>
   </head>
-    <body>
-      <form action="#">
-        <div class="row" style="position: relative">
-          <a class="waves-effect waves-light btn col s1" id="reset-button">Reset</a>
-          <div class="col s2">
-            <p class="blue-text">Coherence</p>
-            <p class="range-field">
-              <input type="range" id="slider-coherence" min="0" max="1000"/>
-            </p>
-          </div>
-          <div class="col s2">
-            <p class="blue-text">Separation</p>
-            <p class="range-field">
-              <input type="range" id="slider-separation" min="0" max="100" />
-            </p>
-          </div>
-          <div class="col s2">
-            <p class="blue-text">Alignment</p>
-            <p class="range-field">
-              <input type="range" id="slider-alignment" min="0" max="100">
-            </p>
-          </div>
-          <div class="col s2">
-            <p class="blue-text">Visual Range</p>
-            <p class="range-field">
-              <input type="range" id="slider-visual-range" min="0" max="100"/>
-            </p>
-          </div>
-
+  <body onmousemove="mouse_position(event)">
+    <form action="#">
+      <div class="row" style="position: relative">
+        <div class="col s2">
+          <a class="waves-effect waves-light btn" id="reset-button"
+            >Reset</a
+          >
         </div>
-        
-      </form>
+        <div class="col s2">
+          <p class="blue-text">Coherence</p>
+          <p class="range-field">
+            <input type="range" id="slider-coherence" min="0" max="1000" />
+          </p>
+        </div>
+        <div class="col s2">
+          <p class="blue-text">Separation</p>
+          <p class="range-field">
+            <input type="range" id="slider-separation" min="0" max="100" />
+          </p>
+        </div>
+        <div class="col s2">
+          <p class="blue-text">Alignment</p>
+          <p class="range-field">
+            <input type="range" id="slider-alignment" min="0" max="100" />
+          </p>
+        </div>
+        <div class="col s2">
+          <p class="blue-text">Visual Range</p>
+          <p class="range-field">
+            <input type="range" id="slider-visual-range" min="0" max="100" />
+          </p>
+        </div>
+        <div class="col s2">
+          <p class="blue-text">Mouse as Leader</p>
+          <label class="switch"
+            ><input type="checkbox" id="toggle-mouse" />
+            <div></div>
+          </label>
+        </div>
+      </div>
+    </form>
     <canvas id="boids" width="150" height="150"></canvas>
   </body>
 </html>
