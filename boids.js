@@ -20,7 +20,7 @@ const ALPHA_RED = "#80000066";
 
 // Simulation config
 var mouseLeaderMode = false;
-var drawTrail = true;
+const DRAW_TRAIL = true;
 
 // Simulation constants
 const BOID_SPEED_LIMIT = 15;
@@ -120,7 +120,7 @@ function sizeCanvas() {
 // Constrain a boid to within the window. If it gets too close to an edge,
 // nudge it back in and reverse its direction.
 function keepWithinBounds(boid) {
-  const margin = 300;
+  const margin = 100;
   const turnFactor = 1;
 
   if (boid.x < margin) {
@@ -157,6 +157,11 @@ function flyTowardsCenter(boid, leader) {
       centerX = centerX / numNeighbors;
       centerY = centerY / numNeighbors;
 
+      if (mouseLeaderMode) {
+        centerX = mouse.x * leaderWeight + centerX * (1 - leaderWeight);
+        centerY = mouse.y * leaderWeight + centerY * (1 - leaderWeight);
+      }
+
       boid.dx += (centerX - boid.x) * centeringFactor;
       boid.dy += (centerY - boid.y) * centeringFactor;
     }
@@ -170,13 +175,8 @@ function flyTowardsCenter(boid, leader) {
     
   }
 
-  if (mouseLeaderMode) {
-    centerX = mouse.x * leaderWeight + centerX * (1 - leaderWeight);
-    centerY = mouse.y * leaderWeight + centerY * (1 - leaderWeight);
-  }
-
-  boid.dx += (centerX - boid.x) * centeringFactor;
-  boid.dy += (centerY - boid.y) * centeringFactor;
+  // boid.dx += (centerX - boid.x) * centeringFactor;
+  // boid.dy += (centerY - boid.y) * centeringFactor;
 }
 
 // Move away from other boids that are too close to avoid colliding
