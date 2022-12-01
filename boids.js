@@ -3,6 +3,8 @@ let width = 150;
 let height = 150;
 
 const numBoids = 100;
+const numPredators = 1;
+const n_obstacles = 4;
 var visualRange = 75;
 var centeringFactor = 0.005; // Coherence
 var avoidFactor = 0.05; // Separation
@@ -13,10 +15,12 @@ var leaderWeight = 0.3; // How much the boids will go towards the leader
 const YELLOW = "#f4df55";
 const BLUE = "#558cf4";
 const ALPHA_BLUE = "#558cf466";
+const RED = "#800000";
+const ALPHA_RED = "#80000066";
 
 // Simulation config
 var mouseLeaderMode = false;
-var drawTrail = true;
+const DRAW_TRAIL = true;
 
 // Simulation constants
 const BOID_SPEED_LIMIT = 15;
@@ -33,7 +37,23 @@ var mouse = {
   dy: 0,
 };
 
+// Predation variables
+var predationFactor = 0.005; // How much the predator will pursue the flock
+var avoidPredatorFactor = 0.05; // How much the flock try to avoid the predator
+
 var boids = [];
+var predatorBoids = []
+var obstacles = []
+
+const boidsColors = {
+  "normalBoid": BLUE,
+  "predatorBoid": RED
+}
+
+const boidsTrails = {
+  "normalBoid": ALPHA_BLUE,
+  "predatorBoid": ALPHA_RED
+}
 
 function mouse_position(e) {
   mouse.x = e.clientX;
@@ -49,7 +69,22 @@ function initBoids() {
       dx: Math.random() * 10 - 5,
       dy: Math.random() * 10 - 5,
       history: [],
+      type: "normalBoid",
     };
+  }
+}
+
+function initPredators() {
+  predatorBoids = []
+  for (var i = 0; i < numPredators; i+= 1) {
+    predatorBoids[predatorBoids.length] = {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      dx: Math.random() * 10 - 5,
+      dy: Math.random() * 10 - 5,
+      history: [],
+      type: "predatorBoid"
+    }
   }
 }
 
@@ -74,8 +109,10 @@ function nClosestBoids(boid, n) {
 // size and width/height variables.
 function sizeCanvas() {
   const canvas = document.getElementById("boids");
-  width = window.innerWidth;
-  height = window.innerHeight;
+
+  width = canvas.parentElement.clientWidth;
+  height = canvas.parentElement.clientHeight;
+
   canvas.width = width;
   canvas.height = height;
 }
@@ -83,7 +120,7 @@ function sizeCanvas() {
 // Constrain a boid to within the window. If it gets too close to an edge,
 // nudge it back in and reverse its direction.
 function keepWithinBounds(boid) {
-  const margin = 300;
+  const margin = 100;
   const turnFactor = 1;
 
   if (boid.x < margin) {
@@ -116,17 +153,30 @@ function flyTowardsCenter(boid, leader) {
   }
 
   if (numNeighbors) {
-    centerX = centerX / numNeighbors;
-    centerY = centerY / numNeighbors;
+    if (boid.type == 'normalBoid') {
+      centerX = centerX / numNeighbors;
+      centerY = centerY / numNeighbors;
+
+      if (mouseLeaderMode) {
+        centerX = mouse.x * leaderWeight + centerX * (1 - leaderWeight);
+        centerY = mouse.y * leaderWeight + centerY * (1 - leaderWeight);
+      }
+
+      boid.dx += (centerX - boid.x) * centeringFactor;
+      boid.dy += (centerY - boid.y) * centeringFactor;
+    }
+    else if (boid.type == 'predatorBoid') {
+      centerX = centerX / numNeighbors;
+      centerY = centerY / numNeighbors;
+
+      boid.dx += (centerX - boid.x) * predationFactor;
+      boid.dy += (centerY - boid.y) * predationFactor;
+    }
+    
   }
 
-  if (mouseLeaderMode) {
-    centerX = mouse.x * leaderWeight + centerX * (1 - leaderWeight);
-    centerY = mouse.y * leaderWeight + centerY * (1 - leaderWeight);
-  }
-
-  boid.dx += (centerX - boid.x) * centeringFactor;
-  boid.dy += (centerY - boid.y) * centeringFactor;
+  // boid.dx += (centerX - boid.x) * centeringFactor;
+  // boid.dy += (centerY - boid.y) * centeringFactor;
 }
 
 // Move away from other boids that are too close to avoid colliding
@@ -145,6 +195,21 @@ function avoidOthers(boid) {
 
   boid.dx += moveX * avoidFactor;
   boid.dy += moveY * avoidFactor;
+}
+
+// Run away from predators
+function avoidPredators(boid) {
+  let moveX = 0;
+  let moveY = 0;
+  for (let predator of predatorBoids) {
+    if (distance(boid, predator) < visualRange) {
+      moveX += boid.x - predator.x;
+      moveY += boid.y - predator.y;
+    }
+  }
+
+  boid.dx += moveX * avoidPredatorFactor;
+  boid.dy += moveY * avoidPredatorFactor;
 }
 
 // Find the average velocity (speed and direction) of the other boids and
@@ -188,8 +253,7 @@ function drawBoid(ctx, boid) {
   ctx.translate(boid.x, boid.y);
   ctx.rotate(angle);
   ctx.translate(-boid.x, -boid.y);
-  ctx.fillStyle = BOID_COLOR;
-  // Draw triangle
+  ctx.fillStyle = boidsColors[boid.type];
   ctx.beginPath();
   ctx.moveTo(boid.x, boid.y);
   ctx.lineTo(boid.x - 15, boid.y + 5);
@@ -198,8 +262,8 @@ function drawBoid(ctx, boid) {
   ctx.fill();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-  if (drawTrail) {
-    ctx.strokeStyle = BOID_PATH_COLOR;
+  if (DRAW_TRAIL) {
+    ctx.strokeStyle = boidsTrails[boid.type];
     ctx.beginPath();
     ctx.moveTo(boid.history[0][0], boid.history[0][1]);
     for (const point of boid.history) {
@@ -229,6 +293,7 @@ function animationLoop() {
     // Update the velocities according to each rule
     flyTowardsCenter(boid);
     avoidOthers(boid);
+    avoidPredators(boid);
     matchVelocity(boid);
     limitSpeed(boid);
     keepWithinBounds(boid);
@@ -240,6 +305,18 @@ function animationLoop() {
     boid.history = boid.history.slice(-50);
   }
 
+
+  for (let predatorBoid of predatorBoids) {
+    flyTowardsCenter(predatorBoid);
+    matchVelocity(predatorBoid);
+    limitSpeed(predatorBoid);
+    keepWithinBounds(predatorBoid);
+
+    predatorBoid.x += predatorBoid.dx;
+    predatorBoid.y += predatorBoid.dy;
+    predatorBoid.history.push([predatorBoid.x, predatorBoid.y])
+    predatorBoid.history = predatorBoid.history.slice(-50);
+  }
   // Clear the canvas and redraw all the boids in their current positions
   const ctx = document.getElementById("boids").getContext("2d");
   ctx.clearRect(0, 0, width, height);
@@ -248,17 +325,22 @@ function animationLoop() {
   }
   if (mouseLeaderMode) drawMouseLeader(ctx, mouse);
 
+  for (let predatorBoid of predatorBoids) {
+    drawBoid(ctx, predatorBoid);
+  }
+
   // Schedule the next frame
   window.requestAnimationFrame(animationLoop);
 }
 
 window.onload = () => {
   // Make sure the canvas always fills the whole window
-  //   window.addEventListener("resize", sizeCanvas, false);
+  window.addEventListener("resize", sizeCanvas, false);
   sizeCanvas();
 
   // Randomly distribute the boids to start
   initBoids();
+  initPredators();
 
   // Schedule the main animation loop
   window.requestAnimationFrame(animationLoop);
@@ -289,6 +371,16 @@ window.onload = () => {
   document.getElementById("toggle-mouse").oninput = (ev) => {
     mouseLeaderMode = ev.target.checked;
   };
+
+  document.getElementById("slider-predator-coherence").value = predationFactor * 1000
+  document.getElementById("slider-predator-coherence").oninput = (ev) => {
+    predationFactor = ev.target.value / 1000
+  }
+
+  document.getElementById("slider-avoid-predator").value = avoidPredatorFactor * 100
+  document.getElementById("slider-avoid-predator").oninput = (ev) => {
+    avoidPredatorFactor = ev.target.value / 100
+  }
 
   document.getElementById("reset-button").onclick = (ev) => {
     initBoids();

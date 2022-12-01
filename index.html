@@ -15,57 +15,74 @@
     <title>Boids</title>
     <script src="./boids.js"></script>
     <style type="text/css">
+      html {
+        height:100%;
+      }
       body {
         margin: 0;
         background: #282c34;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height:100%;
+        width: 100%
       }
-      /* input {
-        max-width: 20%;
-      } */
+      #bottom {
+        flex:1;
+      }
     </style>
   </head>
-  <body onmousemove="mouse_position(event)">
-    <form action="#">
-      <div class="row" style="position: relative">
-        <div class="col s2">
-          <a class="waves-effect waves-light btn" id="reset-button"
-            >Reset</a
-          >
+    <body onmousemove="mouse_position(event)">
+      <form action="#" id="top">
+        <div class="row" style="position: relative">
+          <a class="waves-effect waves-light btn col s1" id="reset-button">Reset</a>
+          <div class="col s2">
+            <p class="blue-text">Coherence</p>
+            <p class="range-field">
+              <input type="range" id="slider-coherence" min="0" max="1000"/>
+            </p>
+          </div>
+          <div class="col s2">
+            <p class="blue-text">Separation</p>
+            <p class="range-field">
+              <input type="range" id="slider-separation" min="0" max="100" />
+            </p>
+          </div>
+          <div class="col s2">
+            <p class="blue-text">Alignment</p>
+            <p class="range-field">
+              <input type="range" id="slider-alignment" min="0" max="100">
+            </p>
+          </div>
+          <div class="col s2">
+            <p class="blue-text">Visual Range</p>
+            <p class="range-field">
+              <input type="range" id="slider-visual-range" min="0" max="100"/>
+            </p>
+          </div>
+          <div class="col s2">
+            <p class="blue-text">Predator coherence</p>
+            <p class="range-field">
+              <input type="range" id="slider-predator-coherence" min="0" max="50"/>
+            </p>
+          </div>
+          <div class="col s2">
+            <p class="blue-text">Avoid predator</p>
+            <p class="range-field">
+              <input type="range" id="slider-avoid-predator" min="0" max="100"/>
+            </p>
+          </div>
+          <div class="col s2">
+            <p class="blue-text">Mouse as Leader</p>
+            <label class="switch"
+              ><input type="checkbox" id="toggle-mouse" />
+              <div></div>
+            </label>
+          </div>
         </div>
-        <div class="col s2">
-          <p class="blue-text">Coherence</p>
-          <p class="range-field">
-            <input type="range" id="slider-coherence" min="0" max="1000" />
-          </p>
-        </div>
-        <div class="col s2">
-          <p class="blue-text">Separation</p>
-          <p class="range-field">
-            <input type="range" id="slider-separation" min="0" max="100" />
-          </p>
-        </div>
-        <div class="col s2">
-          <p class="blue-text">Alignment</p>
-          <p class="range-field">
-            <input type="range" id="slider-alignment" min="0" max="100" />
-          </p>
-        </div>
-        <div class="col s2">
-          <p class="blue-text">Visual Range</p>
-          <p class="range-field">
-            <input type="range" id="slider-visual-range" min="0" max="100" />
-          </p>
-        </div>
-        <div class="col s2">
-          <p class="blue-text">Mouse as Leader</p>
-          <label class="switch"
-            ><input type="checkbox" id="toggle-mouse" />
-            <div></div>
-          </label>
-        </div>
+      </form>
+      <div id="bottom">
+        <canvas id="boids"></canvas>
       </div>
-    </form>
-    <canvas id="boids" width="150" height="150"></canvas>
   </body>
 </html>
