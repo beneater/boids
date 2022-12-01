@@ -18,6 +18,7 @@ const BLUE = "#558cf4";
 const ALPHA_BLUE = "#558cf466";
 const RED = "#800000";
 const ALPHA_RED = "#80000066";
+const ALPHA_YELLOW = "#f4df5566"
 
 // Simulation config
 var mouseLeaderMode = false;
@@ -41,6 +42,7 @@ var mouse = {
 // Predation variables
 var predationFactor = 0.005; // How much the predator will pursue the flock
 var avoidPredatorFactor = 0.05; // How much the flock try to avoid the predator
+var eatRange = 10;
 
 var boids = [];
 var predatorBoids = []
@@ -263,7 +265,7 @@ function avoidObstacle(boid) {
     if (distance(boid, obstacle) - obstacle.r < visualRange) {
       moveX += boid.x - obstacle.x;
       moveY += boid.y - obstacle.y;
-      changeDirectionFactor += 15/(distance(boid, obstacle) - obstacle.r)
+      changeDirectionFactor += 20/(distance(boid, obstacle) - obstacle.r + 1e-3)
     }
   }
 
@@ -311,6 +313,22 @@ function matchVelocity(boid) {
   }
 }
 
+// Find the average velocity (speed and direction) of the other boids and
+// adjust velocity slightly to match.
+function eatBoids(predator) {
+  let boidsToEat = [];
+  for (let i = 0; i < boids.length; i++) {
+    let otherBoid = boids[i]
+    if (distance(predator, otherBoid) < eatRange) {
+      boidsToEat.push(i);
+    }
+  }
+
+  for (let boidEaten of boidsToEat) {
+    boids[boidEaten] = boids.pop();
+  }
+}
+
 // Predator match the average velocity of the flock it is hunting
 function matchVelocityPredator(boid) {
   let avgDX = 0;
@@ -329,8 +347,8 @@ function matchVelocityPredator(boid) {
     avgDX = avgDX / numNeighbors;
     avgDY = avgDY / numNeighbors;
 
-    boid.dx += (avgDX - boid.dx) * matchingFactor;
-    boid.dy += (avgDY - boid.dy) * matchingFactor;
+    boid.dx += (avgDX - boid.dx) * matchingFactor*0.5;
+    boid.dy += (avgDY - boid.dy) * matchingFactor*0.5;
   }
 }
 
@@ -385,7 +403,7 @@ function drawWindCircle(ctx) {
   windCircles.forEach(function(windCircle) {
     ctx.beginPath()
     ctx.arc(windCircle.x, windCircle.y, windCircle.r, 0, Math.PI*2);
-    ctx.fillStyle = 'orange'
+    ctx.fillStyle = ALPHA_YELLOW
     ctx.fill()
     // ctx.fill("black");
   })
@@ -433,6 +451,7 @@ function animationLoop() {
     keepWithinBounds(predatorBoid);
     avoidObstacle(predatorBoid);
     passThroughWindCircle(predatorBoid);
+    eatBoids(predatorBoid);
 
     predatorBoid.x += predatorBoid.dx;
     predatorBoid.y += predatorBoid.dy;
