@@ -120,7 +120,6 @@ function initLeaders() {
 // Used by the leaders to leave an indication on the map, hinting boids where to go
 function updateArrows() {
   for (leader of leaderBoids) {
-    console.log(leader.x);
     leader.arrow_dx = leader.dx;
     leader.arrow_dy = leader.dy;
     leader.arrow_x = leader.x;
@@ -193,6 +192,7 @@ function keepWithinBounds(boid) {
 
 // Find the center of mass of the other boids and adjust velocity slightly to
 // point towards the center of mass.
+// If leader is visible, go towards leader with a greater weight.
 function flyTowardsCenter(boid) {
   let centerX = 0;
   let centerY = 0;
@@ -205,18 +205,23 @@ function flyTowardsCenter(boid) {
       numNeighbors += 1;
     }
   }
-
   if (numNeighbors) {
     if (boid.type == "normalBoid") {
       // if (boid.type == "normalBoid" || boid.type == "leaderBoid" ) {
       centerX = centerX / numNeighbors;
       centerY = centerY / numNeighbors;
 
+      // Weighting in mouse leader position if mouse leader is visible
       if (mouseLeaderMode) {
-        centerX =
-          mouse.x * mouseLeaderWeight + centerX * (1 - mouseLeaderWeight);
-        centerY =
-          mouse.y * mouseLeaderWeight + centerY * (1 - mouseLeaderWeight);
+        if (
+          boidDistance(boid, mouse) <
+          visualRange * LEADER_VISUAL_RANGE_MULT
+        ) {
+          centerX =
+            mouse.x * mouseLeaderWeight + centerX * (1 - mouseLeaderWeight);
+          centerY =
+            mouse.y * mouseLeaderWeight + centerY * (1 - mouseLeaderWeight);
+        }
       }
 
       boid.dx += (centerX - boid.x) * centeringFactor;
