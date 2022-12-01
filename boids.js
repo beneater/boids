@@ -4,7 +4,8 @@ let height = 150;
 
 const numBoids = 100;
 const numPredators = 1;
-const n_obstacles = 4;
+const numObstacles = 4;
+const numWindCircles = 4;
 var visualRange = 75;
 var centeringFactor = 0.005; // Coherence
 var avoidFactor = 0.05; // Separation
@@ -44,6 +45,7 @@ var avoidPredatorFactor = 0.05; // How much the flock try to avoid the predator
 var boids = [];
 var predatorBoids = []
 var obstacles = []
+var windCircles = []
 
 const boidsColors = {
   "normalBoid": BLUE,
@@ -84,6 +86,30 @@ function initPredators() {
       dy: Math.random() * 10 - 5,
       history: [],
       type: "predatorBoid"
+    }
+  }
+}
+
+function initObstacles() {
+  obstacles = []
+  for (var i = 0; i < numObstacles; i+= 1) {
+    obstacles[obstacles.length] = {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: Math.random() * 40,
+    }
+  }
+}
+
+function initWindCircles() {
+  windCircles = []
+  for (var i = 0; i < numWindCircles; i+= 1) {
+    windCircles[windCircles.length] = {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: Math.random()*40,
+      dx: Math.random() * 20,
+      dy: Math.random() * 20
     }
   }
 }
@@ -153,30 +179,46 @@ function flyTowardsCenter(boid, leader) {
   }
 
   if (numNeighbors) {
-    if (boid.type == 'normalBoid') {
-      centerX = centerX / numNeighbors;
-      centerY = centerY / numNeighbors;
+    centerX = centerX / numNeighbors;
+    centerY = centerY / numNeighbors;
 
-      if (mouseLeaderMode) {
-        centerX = mouse.x * leaderWeight + centerX * (1 - leaderWeight);
-        centerY = mouse.y * leaderWeight + centerY * (1 - leaderWeight);
-      }
-
-      boid.dx += (centerX - boid.x) * centeringFactor;
-      boid.dy += (centerY - boid.y) * centeringFactor;
+    if (mouseLeaderMode) {
+      centerX = mouse.x * leaderWeight + centerX * (1 - leaderWeight);
+      centerY = mouse.y * leaderWeight + centerY * (1 - leaderWeight);
     }
-    else if (boid.type == 'predatorBoid') {
-      centerX = centerX / numNeighbors;
-      centerY = centerY / numNeighbors;
 
-      boid.dx += (centerX - boid.x) * predationFactor;
-      boid.dy += (centerY - boid.y) * predationFactor;
-    }
-    
+    boid.dx += (centerX - boid.x) * centeringFactor;
+    boid.dy += (centerY - boid.y) * centeringFactor;
   }
 
   // boid.dx += (centerX - boid.x) * centeringFactor;
   // boid.dy += (centerY - boid.y) * centeringFactor;
+}
+
+// The predator flies towards the center of the flock it is huntinh
+// The predator have a larger visual range
+function flyTowardsCenterPredator(boid) {
+  let centerX = 0;
+  let centerY = 0;
+  let numNeighbors = 0;
+
+  for (let otherBoid of boids) {
+    if (distance(boid, otherBoid) < 1.5*visualRange) {
+      centerX += otherBoid.x;
+      centerY += otherBoid.y;
+      numNeighbors += 1;
+    }
+  }
+
+  if (numNeighbors > 0) {
+    centerX = centerX / numNeighbors;
+    centerY = centerY / numNeighbors;
+  
+    boid.dx += (centerX - boid.x) * predationFactor;
+    boid.dy += (centerY - boid.y) * predationFactor;
+  } 
+
+
 }
 
 // Move away from other boids that are too close to avoid colliding
@@ -212,6 +254,39 @@ function avoidPredators(boid) {
   boid.dy += moveY * avoidPredatorFactor;
 }
 
+// Boids will try to avoid obstacles, the near it gets more it will avoid.
+function avoidObstacle(boid) {
+  let moveX = 0;
+  let moveY = 0;
+  let changeDirectionFactor = 0
+  for (let obstacle of obstacles) {
+    if (distance(boid, obstacle) - obstacle.r < visualRange) {
+      moveX += boid.x - obstacle.x;
+      moveY += boid.y - obstacle.y;
+      changeDirectionFactor += 15/(distance(boid, obstacle) - obstacle.r)
+    }
+  }
+
+  boid.dx += moveX * avoidFactor*changeDirectionFactor;
+  boid.dy += moveY * avoidFactor*changeDirectionFactor;
+}
+
+// The windCircle adds a factor to each direction of the boid
+function passThroughWindCircle(boid) {
+  let moveX = 0;
+  let moveY = 0;
+  let aerodinamicFactor = 1;
+  for (let windCircle of windCircles) {
+    if (distance(boid, windCircle) < windCircle.r) {
+      moveX += windCircle.dx;
+      moveY += windCircle.dy;
+    }
+  }
+
+  boid.dx += moveX*aerodinamicFactor;
+  boid.dy += moveY*aerodinamicFactor;
+}
+
 // Find the average velocity (speed and direction) of the other boids and
 // adjust velocity slightly to match.
 function matchVelocity(boid) {
@@ -221,6 +296,29 @@ function matchVelocity(boid) {
 
   for (let otherBoid of boids) {
     if (distance(boid, otherBoid) < visualRange) {
+      avgDX += otherBoid.dx;
+      avgDY += otherBoid.dy;
+      numNeighbors += 1;
+    }
+  }
+
+  if (numNeighbors) {
+    avgDX = avgDX / numNeighbors;
+    avgDY = avgDY / numNeighbors;
+
+    boid.dx += (avgDX - boid.dx) * matchingFactor;
+    boid.dy += (avgDY - boid.dy) * matchingFactor;
+  }
+}
+
+// Predator match the average velocity of the flock it is hunting
+function matchVelocityPredator(boid) {
+  let avgDX = 0;
+  let avgDY = 0;
+  let numNeighbors = 0;
+
+  for (let otherBoid of boids) {
+    if (distance(boid, otherBoid) < 1.5*visualRange) {
       avgDX += otherBoid.dx;
       avgDY += otherBoid.dy;
       numNeighbors += 1;
@@ -273,6 +371,26 @@ function drawBoid(ctx, boid) {
   }
 }
 
+function drawObstacles(ctx) {
+  obstacles.forEach(function(obstacle) {
+    ctx.beginPath()
+    ctx.arc(obstacle.x, obstacle.y, obstacle.r, 0, Math.PI*2);
+    ctx.fillStyle = 'black'
+    ctx.fill()
+    // ctx.fill("black");
+  })
+}
+
+function drawWindCircle(ctx) {
+  windCircles.forEach(function(windCircle) {
+    ctx.beginPath()
+    ctx.arc(windCircle.x, windCircle.y, windCircle.r, 0, Math.PI*2);
+    ctx.fillStyle = 'orange'
+    ctx.fill()
+    // ctx.fill("black");
+  })
+}
+
 function drawMouseLeader(ctx, mouse) {
   ctx.fillStyle = LEADER_COLOR;
 
@@ -297,7 +415,9 @@ function animationLoop() {
     matchVelocity(boid);
     limitSpeed(boid);
     keepWithinBounds(boid);
-
+    avoidObstacle(boid);
+    passThroughWindCircle(boid);
+  
     // Update the position based on the current velocity
     boid.x += boid.dx;
     boid.y += boid.dy;
@@ -307,10 +427,12 @@ function animationLoop() {
 
 
   for (let predatorBoid of predatorBoids) {
-    flyTowardsCenter(predatorBoid);
-    matchVelocity(predatorBoid);
+    flyTowardsCenterPredator(predatorBoid);
+    matchVelocityPredator(predatorBoid);
     limitSpeed(predatorBoid);
     keepWithinBounds(predatorBoid);
+    avoidObstacle(predatorBoid);
+    passThroughWindCircle(predatorBoid);
 
     predatorBoid.x += predatorBoid.dx;
     predatorBoid.y += predatorBoid.dy;
@@ -329,6 +451,9 @@ function animationLoop() {
     drawBoid(ctx, predatorBoid);
   }
 
+  drawObstacles(ctx);
+  drawWindCircle(ctx);
+
   // Schedule the next frame
   window.requestAnimationFrame(animationLoop);
 }
@@ -341,6 +466,8 @@ window.onload = () => {
   // Randomly distribute the boids to start
   initBoids();
   initPredators();
+  initObstacles();
+  initWindCircles();
 
   // Schedule the main animation loop
   window.requestAnimationFrame(animationLoop);
