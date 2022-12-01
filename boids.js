@@ -15,8 +15,8 @@ var leaderWeight = 0.3; // How much the boids will go towards the leader
 const YELLOW = "#f4df55";
 const BLUE = "#558cf4";
 const ALPHA_BLUE = "#558cf466";
-const RED = "#800000";
-const ALPHA_RED = "#80000066";
+const RED = "#d8315b";
+const ALPHA_RED = "#d8315b66";
 
 // Simulation config
 var mouseLeaderMode = false;
