@@ -6,6 +6,7 @@
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
   />
+  <link rel="stylesheet" href="global.css" />
   <!-- Compiled and minified JavaScript -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <link rel="icon" href="/favicon.svg" />
@@ -31,7 +32,7 @@
       }
     </style>
   </head>
-    <body>
+    <body onmousemove="mouse_position(event)">
       <form action="#" id="top">
         <div class="row" style="position: relative">
           <a class="waves-effect waves-light btn col s1" id="reset-button">Reset</a>
@@ -71,8 +72,14 @@
               <input type="range" id="slider-avoid-predator" min="0" max="100"/>
             </p>
           </div>
+          <div class="col s2">
+            <p class="blue-text">Mouse as Leader</p>
+            <label class="switch"
+              ><input type="checkbox" id="toggle-mouse" />
+              <div></div>
+            </label>
+          </div>
         </div>
-      
       </form>
       <div id="bottom">
         <canvas id="boids"></canvas>
